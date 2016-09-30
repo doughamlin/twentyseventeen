@@ -17,3 +17,7 @@ Version 1.0:
 @acmethemes
 @claudiosanches
 @valeriutihai
+@pressionate
+@SGr33n
+@doughamlin
+@zodiac1978
