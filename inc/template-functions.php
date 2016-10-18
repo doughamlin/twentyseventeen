@@ -1,8 +1,6 @@
 <?php
 /**
- * Custom functions that act independently of the theme templates
- *
- * Eventually, some of the functionality here could be replaced by core features.
+ * Additional features to allow styling of the templates
  *
  * @package WordPress
  * @subpackage Twenty_Seventeen
@@ -41,23 +39,28 @@ function twentyseventeen_body_classes( $classes ) {
 		$classes[] = 'no-header-image';
 	}
 
-	// Add class if footer image has been added.
-	$footer_image = get_theme_mod( 'twentyseventeen_footer_image' );
-	if ( isset( $footer_image ) ) {
-		$classes[] = 'twentyseventeen-footer-image';
-	}
-
 	// Add class if sidebar is used.
-	if ( is_active_sidebar( 'sidebar-1' ) && ! twentyseventeen_is_frontpage() ) {
+	if ( is_active_sidebar( 'sidebar-1' ) && ! is_page() ) {
 		$classes[] = 'has-sidebar';
 	}
 
-	// Add class if top header content is added.
-	$twentyseventeen_header_top_text_1 = get_theme_mod( 'twentyseventeen_header_top_text_1' );
-	$twentyseventeen_header_top_text_2 = get_theme_mod( 'twentyseventeen_header_top_text_2' );
-	if ( '' !== $twentyseventeen_header_top_text_1 || '' !== $twentyseventeen_header_top_text_2 ) {
-		$classes[] = 'has-top-content';
+	// Add class for one or two column page layouts.
+	if ( is_page() ) {
+		if ( 'one-column' === get_theme_mod( 'page_options' ) ) {
+			$classes[] = 'page-one-column';
+		} else {
+			$classes[] = 'page-two-column';
+		}
 	}
+
+	// Add class if the site title and tagline is hidden.
+	if ( 'blank' === get_header_textcolor() ) {
+		$classes[] = 'title-tagline-hidden';
+	}
+
+	// Get the colorscheme or the default if there isn't one.
+	$colors = twentyseventeen_sanitize_colorscheme( get_theme_mod( 'colorscheme', 'light' ) );
+	$classes[] = 'colors-' . $colors;
 
 	return $classes;
 }
@@ -73,7 +76,7 @@ function twentyseventeen_panel_count() {
 	$panel_count = 0;
 
 	foreach ( $panels as $panel ) {
-		if ( get_theme_mod( 'twentyseventeen_panel_' . $panel ) ) {
+		if ( get_theme_mod( 'panel_' . $panel ) ) {
 			$panel_count++;
 		}
 	}
@@ -85,19 +88,21 @@ function twentyseventeen_panel_count() {
  * Checks to see if we're on the homepage or not.
  */
 function twentyseventeen_is_frontpage() {
-	if ( is_front_page() && ! is_home() ) {
-		return true;
-	}
-
-	return false;
+	return ( is_front_page() && ! is_home() );
 }
 
 /**
- * Add a pingback url auto-discovery header for singularly identifiable articles.
+ * Custom Active Callback to check for page.
  */
-function twentyseventeen_pingback_header() {
-	if ( is_singular() && pings_open() ) {
-		printf( '<link rel="pingback" href="%s">' . "\n", get_bloginfo( 'pingback_url' ) );
-	}
+function twentyseventeen_is_page() {
+	return ( is_page() );
 }
-add_action( 'wp_head', 'twentyseventeen_pingback_header' );
+
+/**
+ * Display a default list of pages if no menu is selected.
+ */
+function twentyseventeen_fallback_menu() {
+	wp_page_menu( array(
+		'link_after' => twentyseventeen_get_svg( array( 'icon' => 'expand' ) ),
+	) );
+}

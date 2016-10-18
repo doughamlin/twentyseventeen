@@ -1,6 +1,6 @@
 <?php
 /**
- * Template part for displaying posts
+ * Template part for displaying video posts
  *
  * @link https://codex.wordpress.org/Template_Hierarchy
  *
@@ -9,7 +9,6 @@
  * @since 1.0
  * @version 1.0
  */
-
 ?>
 
 <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
@@ -38,7 +37,12 @@
 		?>
 	</header><!-- .entry-header -->
 
-	<?php if ( '' !== get_the_post_thumbnail() && ! is_single() ) : ?>
+	<?php
+		$content = apply_filters( 'the_content', get_the_content() );
+		$video = get_media_embedded_in_content( $content, array( 'video', 'object', 'embed', 'iframe' ) );
+	?>
+
+	<?php if ( '' !== get_the_post_thumbnail() && ! is_single() && empty( $video ) ) : ?>
 		<div class="post-thumbnail">
 			<a href="<?php the_permalink(); ?>">
 				<?php the_post_thumbnail( 'twentyseventeen-featured-image' ); ?>
@@ -47,7 +51,22 @@
 	<?php endif; ?>
 
 	<div class="entry-content">
-		<?php
+
+		<?php if ( ! is_single() ) :
+
+			// If not a single post, highlight the video file.
+			if ( ! empty( $video ) ) :
+				foreach ( $video as $video_html ) {
+					echo '<div class="entry-video">';
+						echo $video_html;
+					echo '</div>';
+				}
+			endif;
+
+		endif;
+
+		if ( is_single() || empty( $video ) ) :
+
 			the_content( sprintf(
 				/* translators: %s: Name of current post */
 				__( 'Continue reading %s', 'twentyseventeen' ),
@@ -60,7 +79,9 @@
 				'link_before' => '<span class="page-number">',
 				'link_after'  => '</span>',
 			) );
-		?>
+
+		endif; ?>
+
 	</div><!-- .entry-content -->
 
 	<?php if ( is_single() ) : ?>
