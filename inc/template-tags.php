@@ -60,22 +60,28 @@ function twentyseventeen_entry_footer() {
 	$separate_meta = __( ', ', 'twentyseventeen' );
 
 	if ( 'post' === get_post_type() ) {
-		echo '<span class="cat-tags-links">';
 
-		// Display Categories for posts.
+		// Get Categories for posts.
 		$categories_list = get_the_category_list( $separate_meta );
-		// Make sure there's more than one category before displaying.
-		if ( $categories_list && twentyseventeen_categorized_blog() ) {
-			echo '<span class="cat-links">' . twentyseventeen_get_svg( array( 'icon' => 'folder-open' ) ) . '<span class="screen-reader-text">' . __( 'Categories', 'twentyseventeen' ) . '</span>' . $categories_list . '</span>'; // WPCS: XSS OK.
-		}
 
 		// Display Tags for posts.
 		$tags_list = get_the_tag_list( '', $separate_meta );
-		if ( $tags_list ) {
-			echo '<span class="tags-links">' . twentyseventeen_get_svg( array( 'icon' => 'hashtag' ) ) . '<span class="screen-reader-text">' . __( 'Tags', 'twentyseventeen' ) . '</span>' . $tags_list . '</span>'; // WPCS: XSS OK.
-		}
 
-		echo '</span>';
+		// Make sure we have one or the other before proceeding.
+		if ( ( $categories_list && twentyseventeen_categorized_blog() ) || $tags_list ) {
+			echo '<span class="cat-tags-links">';
+
+			// Make sure there's more than one category before displaying.
+			if ( $categories_list && twentyseventeen_categorized_blog() ) {
+				echo '<span class="cat-links">' . twentyseventeen_get_svg( array( 'icon' => 'folder-open' ) ) . '<span class="screen-reader-text">' . __( 'Categories', 'twentyseventeen' ) . '</span>' . $categories_list . '</span>'; // WPCS: XSS OK.
+			}
+
+			if ( $tags_list ) {
+				echo '<span class="tags-links">' . twentyseventeen_get_svg( array( 'icon' => 'hashtag' ) ) . '<span class="screen-reader-text">' . __( 'Tags', 'twentyseventeen' ) . '</span>' . $tags_list . '</span>'; // WPCS: XSS OK.
+			}
+
+			echo '</span>';
+		}
 	}
 
 	twentyseventeen_edit_link();
@@ -115,9 +121,11 @@ endif;
  * @return bool
  */
 function twentyseventeen_categorized_blog() {
-	if ( false === ( $all_the_cool_cats = get_transient( 'twentyseventeen_categories' ) ) ) {
+	$category_count = get_transient( 'twentyseventeen_categories' );
+
+	if ( false === $category_count ) {
 		// Create an array of all the categories that are attached to posts.
-		$all_the_cool_cats = get_categories( array(
+		$categories = get_categories( array(
 			'fields'     => 'ids',
 			'hide_empty' => 1,
 			// We only need to know if there is more than one category.
@@ -125,18 +133,12 @@ function twentyseventeen_categorized_blog() {
 		) );
 
 		// Count the number of categories that are attached to the posts.
-		$all_the_cool_cats = count( $all_the_cool_cats );
+		$category_count = count( $categories );
 
-		set_transient( 'twentyseventeen_categories', $all_the_cool_cats );
+		set_transient( 'twentyseventeen_categories', $category_count );
 	}
 
-	if ( $all_the_cool_cats > 1 ) {
-		// This blog has more than 1 category so twentyseventeen_categorized_blog should return true.
-		return true;
-	}
-
-	// This blog has only 1 category so twentyseventeen_categorized_blog should return false.
-	return false;
+	return $category_count > 1;
 }
 
 

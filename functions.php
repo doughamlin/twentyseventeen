@@ -189,12 +189,24 @@ function twentyseventeen_widgets_init() {
 add_action( 'widgets_init', 'twentyseventeen_widgets_init' );
 
 /**
- * Replaces the excerpt "more" text by a link.
+ * Replaces "[...]" (appended to automatically generated excerpts) with ... and
+ * a 'Continue reading' link.
+ *
+ * Create your own twentysixteen_excerpt_more() function to override in a child theme.
+ *
+ * @since Twenty Seventeen 1.0
+ *
+ * @return string 'Continue reading' link prepended with an ellipsis.
  */
-function twentyseventeen_excerpt_continue_reading() {
-	return ' &hellip; <p class="link-more"><a href="' . esc_url( get_permalink() ) . '">' . sprintf( __( 'Continue reading %s', 'twentyseventeen' ), the_title( '<span class="screen-reader-text">"', '"</span>', false ) ) . '</a></p>';
+function twentyseventeen_excerpt_more() {
+	$link = sprintf( '<p class="link-more"><a href="%1$s" class="more-link">%2$s</a></p>',
+		esc_url( get_permalink( get_the_ID() ) ),
+		/* translators: %s: Name of current post */
+		sprintf( __( 'Continue reading<span class="screen-reader-text"> "%s"</span>', 'twentyseventeen' ), get_the_title( get_the_ID() ) )
+	);
+	return ' &hellip; ' . $link;
 }
-add_filter( 'excerpt_more', 'twentyseventeen_excerpt_continue_reading' );
+add_filter( 'excerpt_more', 'twentyseventeen_excerpt_more' );
 
 /**
  * Handles JavaScript detection.
@@ -260,16 +272,22 @@ function twentyseventeen_scripts() {
 
 	wp_enqueue_script( 'twentyseventeen-skip-link-focus-fix', get_theme_file_uri( '/assets/js/skip-link-focus-fix.js' ), array(), '1.0', true );
 
-	wp_enqueue_script( 'twentyseventeen-navigation', get_theme_file_uri( '/assets/js/navigation.js' ), array(), '1.0', true );
+	$twentyseventeen_l10n = array(
+		'quote'          => twentyseventeen_get_svg( array( 'icon' => 'quote-right' ) ),
+		'has_navigation' => 'false',
+	);
 
-	wp_localize_script( 'twentyseventeen-navigation', 'twentyseventeenScreenReaderText', array(
-		'expand'   => __( 'Expand child menu', 'twentyseventeen' ),
-		'collapse' => __( 'Collapse child menu', 'twentyseventeen' ),
-		'icon'     => twentyseventeen_get_svg( array( 'icon' => 'expand', 'fallback' => true ) ),
-		'quote'    => twentyseventeen_get_svg( array( 'icon' => 'quote-right' ) ),
-	) );
+	if ( has_nav_menu( 'top' ) ) {
+		wp_enqueue_script( 'twentyseventeen-navigation', get_theme_file_uri( '/assets/js/navigation.js' ), array(), '1.0', true );
+		$twentyseventeen_l10n['has_navigation'] = 'true';
+		$twentyseventeen_l10n['expand']         = __( 'Expand child menu', 'twentyseventeen' );
+		$twentyseventeen_l10n['collapse']       = __( 'Collapse child menu', 'twentyseventeen' );
+		$twentyseventeen_l10n['icon']           = twentyseventeen_get_svg( array( 'icon' => 'expand', 'fallback' => true ) );
+	}
 
 	wp_enqueue_script( 'twentyseventeen-global', get_theme_file_uri( '/assets/js/global.js' ), array( 'jquery' ), '1.0', true );
+
+	wp_localize_script( 'twentyseventeen-skip-link-focus-fix', 'twentyseventeenScreenReaderText', $twentyseventeen_l10n );
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
